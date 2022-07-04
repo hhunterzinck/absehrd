@@ -56,8 +56,7 @@ class TestPrivacy(object):
                                       mat_f_s=x_synth, 
                                       missing_value=missing_value, 
                                       header=header,
-                                      metric='euclidean', 
-                                      debug=False)
+                                      metric='euclidean')
         
         assert np.mean(res['real']) < np.mean(res['rand'])
 
