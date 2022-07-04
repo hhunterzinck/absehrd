@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import torch
 from sklearn import metrics
@@ -166,7 +168,7 @@ class Realism(Validator):
                 'header':header_mod}
 
     def validate_prediction(self, x_synth, y_synth, x_real, y_real,
-                            do_gan_train, n_epoch=5, model_type='mlp', debug=False):
+                            do_gan_train, n_epoch=5, model_type='mlp'):
         """Validate the synthetic dataset in the GAN-train and GAN-test
         framework.
 
@@ -186,8 +188,6 @@ class Realism(Validator):
             DESCRIPTION. The default is 5.
         model_type : TYPE, optional
             DESCRIPTION. The default is 'mlp'.
-        debug : TYPE, optional
-            DESCRIPTION. The default is False.
 
         Returns
         -------
@@ -197,11 +197,11 @@ class Realism(Validator):
         """
 
         if (sum(y_synth) == 0 or sum(y_synth) == len(y_synth)) and do_gan_train:
-            print('Error: synthetic outcome is constant')
+            logging.error('Error: synthetic outcome is constant')
             return None
 
         if (sum(y_real) == 0 or sum(y_real) == len(y_real)) and not do_gan_train:
-            print('Error: real outcome is constant')
+            logging.error('Error: real outcome is constant')
             return None
 
         if do_gan_train:
@@ -231,8 +231,7 @@ class Realism(Validator):
             p_tst = model(x_test)
             before_train = criterion(p_tst.squeeze(), y_test)
 
-            if debug:
-                print('Test loss before training' , before_train.item())
+            logging.info('Test loss before training' , before_train.item())
 
             model.train()
             for epoch in range(n_epoch):
@@ -240,8 +239,7 @@ class Realism(Validator):
                 p_trn = model(x_train)
                 loss = criterion(p_trn.squeeze(), y_train)
 
-                if debug:
-                    print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+                logging.info('Epoch {}: train loss: {}'.format(epoch, loss.item()))
 
                 loss.backward()
                 optimizer.step()
@@ -266,7 +264,7 @@ class Realism(Validator):
         return {'mode':model, 'p':p_tst, 'roc':roc, 'auc':auc}
 
     def gan_train(self, x_synth, y_synth, x_real, y_real, n_epoch=5,
-                  model_type='mlp', debug=False):
+                  model_type='mlp'):
         """Train a predictive model with synthetic data, test in a real
         dataset, and report predictive performance.
 
@@ -284,8 +282,6 @@ class Realism(Validator):
             DESCRIPTION. The default is 5.
         model_type : TYPE, optional
             DESCRIPTION. The default is 'mlp'.
-        debug : TYPE, optional
-            DESCRIPTION. The default is False.
 
         Returns
         -------
@@ -296,10 +292,10 @@ class Realism(Validator):
 
         return self.validate_prediction(x_synth, y_synth, x_real, y_real,
                                    do_gan_train=True, n_epoch=n_epoch,
-                                   model_type=model_type, debug=debug)
+                                   model_type=model_type)
 
     def gan_test(self, x_synth, y_synth, x_real, y_real, n_epoch=5,
-                 model_type='mlp', debug=False):
+                 model_type='mlp'):
         """Train a predictive model with real data, test in a synthetic
         dataset, and report predictive performance.
 
@@ -317,8 +313,6 @@ class Realism(Validator):
             DESCRIPTION. The default is 5.
         model_type : TYPE, optional
             DESCRIPTION. The default is 'mlp'.
-        debug : TYPE, optional
-            DESCRIPTION. The default is False.
 
         Returns
         -------
@@ -329,7 +323,7 @@ class Realism(Validator):
 
         return self.validate_prediction(x_synth, y_synth, x_real, y_real,
                                    do_gan_train=False, n_epoch=n_epoch,
-                                   model_type=model_type, debug=debug)
+                                   model_type=model_type)
 
     def gan_train_test(self, mat_f_r_trn, mat_f_r_tst, mat_f_s, header, outcome, 
                        missing_value, n_epoch=5, model_type='lr'):

@@ -630,7 +630,7 @@ class Preprocessor:
                     d_header = np.append(d_header, header[j])
 
             else:
-                print("Warning: variable type not recognized.  Appending as is.")
+                logging.error("Warning: variable type not recognized.  Appending as is.")
                 s_j = x_j
                 d_header = np.append(d_header, header[j])
 

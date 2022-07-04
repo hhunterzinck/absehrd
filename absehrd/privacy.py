@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from sklearn import metrics
 from sklearn.neighbors import DistanceMetric
@@ -74,7 +76,7 @@ class Privacy(Validator):
         return d_min
 
     def assess_memorization(self, mat_f_r, mat_f_s, missing_value, header,
-                            metric='euclidean', debug=False):
+                            metric='euclidean'):
         """Calculate the distribution of nearest neighbors.
 
         Parameters
@@ -93,9 +95,6 @@ class Privacy(Validator):
 
         """
         
-        if debug:
-            newline = '\n'
-        
         # preprocess
         pre = Preprocessor(missing_value)
         met_f_r = pre.get_metadata(arr = mat_f_r, header=header)
@@ -110,26 +109,22 @@ class Privacy(Validator):
 
 
         # real train to real train
-        if debug:
-            print(newline+'Real - real:', flush=True)
+        logging.info('Real - real:')
         nn_real = self.nearest_neighbors(arr1=x_real, metric=metric)
 
         # real to synth
-        if debug:
-            print(newline+'Real - synthetic:', flush=True)
+        logging.info('Real - synthetic:')
         nn_synth = self.nearest_neighbors(arr1=x_real, arr2=x_synth, metric=metric)
 
         # real to probabilistically sampled
-        if debug:
-            print(newline+'Real - probabilistic:', flush=True)
+        logging.info('Real - probabilistic:')
         x_prob = np.full(shape=x_real.shape, fill_value=0)
         for j in range(x_real.shape[1]):
             x_prob[:,j] = np.random.binomial(n=1, p=np.mean(x_real[:,j]), size=x_real.shape[0])
         nn_prob = self.nearest_neighbors(arr1=x_real, arr2=x_prob, metric=metric)
 
         # real to noise
-        if debug:
-            print(newline+'Real - noise:', flush=True)        
+        logging.info('Real - noise:')        
         x_rand = np.random.randint(low=0, high=2, size=x_real.shape)
         nn_rand = self.nearest_neighbors(arr1=x_real, arr2=x_rand, metric=metric)
 
@@ -168,7 +163,7 @@ class Privacy(Validator):
         y_all = np.append(np.zeros(len(r_tst)), np.ones(len(r_trn)))
 
         # train shadow GAN
-        gan_shadow = cor.train(x=s_all, n_cpu=n_cpu, debug=True)
+        gan_shadow = cor.train(x=s_all, n_cpu=n_cpu)
 
         # load shadow discriminator
         minibatch_averaging = gan_shadow['parameter_dict']['minibatch_averaging']
@@ -339,7 +334,7 @@ class Privacy(Validator):
         else:
             msg = 'Warning: plot for analysis \'' + res['analysis'] + \
                 '\' not currently implemented in privacy::plot().'
-            print(msg)
+            logging.info(msg)
 
         if file_pdf is None:
             plt.show()

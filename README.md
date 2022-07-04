@@ -44,21 +44,20 @@ python scripts/example_dataset.py
 
 Train a synthetic data generator on the example dataset:
 ```
-absehrd train --file_data examples/example_train.csv \
-                        --outprefix_train examples/example_model \
-                        --verbose
+absehrd --verbose train --file_data examples/example_train.csv \
+                        --outprefix_train examples/example_model
 ```
 
 Generate synthetic samples from the trained generator:
 ```
-absehrd generate --file_model examples/example_model.pkl \
+absehrd --verbose generate --file_model examples/example_model.pkl \
                            --outprefix_generate examples/example_synthetic \
                            --generate_size 5000
 ```
 
 Validate the realism of the synthetic dataset:
 ```
-absehrd realism --outprefix_realism examples/example_realism \
+absehrd --verbose realism --outprefix_realism examples/example_realism \
                           --file_realism_real_train examples/example_train.csv \
                           --file_realism_real_test examples/example_test.csv \
                           --file_realism_synth examples/example_synthetic.csv \
@@ -69,7 +68,7 @@ absehrd realism --outprefix_realism examples/example_realism \
 
 Validate the privacy-preserving properties of the synthetic dataset:
 ```
-absehrd privacy --outprefix_privacy examples/example_realism \
+absehrd --verbose privacy --outprefix_privacy examples/example_realism \
                           --file_privacy_real_train examples/example_train.csv \
                           --file_privacy_real_test examples/example_test.csv \
                           --file_privacy_synth examples/example_synthetic.csv \

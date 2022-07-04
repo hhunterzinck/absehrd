@@ -27,18 +27,29 @@ def create_cli():
     choices_output = ['summary', 'file', 'plot', 'all']
 
     # parsers
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Automated Brewing of Synthetic Electronic Health Record Data",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--verbose',
+                    help='print verbose output',
+                    action='store_true',
+                    required=False)
+
     subparsers = parser.add_subparsers(help='task to perform',
                                     dest='task',
                                     required=True)
     parser_t = subparsers.add_parser('train',
-                    help='train a synthetic data generator')
+                    help='train a synthetic data generator',
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser_g = subparsers.add_parser('generate',
-                    help='generate synthetic dataset')
+                    help='generate synthetic dataset',
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser_r = subparsers.add_parser('realism',
-                    help='assess realism of synthetic dataset')
+                    help='assess realism of synthetic dataset',
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser_p = subparsers.add_parser('privacy',
-                    help='assess privacy risk of synthetic dataset')
+                    help='assess privacy risk of synthetic dataset',
+                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # subparser: train
     parser_t.add_argument('--file_data',
@@ -68,10 +79,6 @@ def create_cli():
                     help='fraction of real data to train generative model',
                     type=float,
                     default=0.75,
-                    required=False)
-    parser_t.add_argument('--verbose',
-                    help='print verbose output',
-                    action='store_true',
                     required=False)
     parser_t.add_argument('--n_cpu_train',
                     help='number of CPUs to use (>0)',
@@ -259,7 +266,8 @@ def main():
     check_input(parser)
     args = parser.parse_args()
 
-    logging.getLogger().setLevel(logging.INFO)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.INFO)
 
     # initial message -----------------
 
@@ -275,11 +283,6 @@ def main():
         # instantiate
         pre = Preprocessor(missing_value=args.missing_value)
         outfile = args.outprefix_train + '.pkl'
-        
-        if args.verbose:
-            debug = True
-        else:
-            debug = False
 
         # load real data
         ftr = pre.read_file(args.file_data, has_header=True)
@@ -300,7 +303,7 @@ def main():
 
         # train and save model
         if args.train_type == 'corgan':
-            syn = Corgan(debug=debug, n_cpu=args.n_cpu_train)
+            syn = Corgan(n_cpu=args.n_cpu_train)
         model = syn.train(x=r_trn, n_epochs=args.n_epoch)
         model['m'] = meta
         model['header'] = obj_d['header']

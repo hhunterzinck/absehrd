@@ -9,6 +9,8 @@ https://github.com/astorfi/cor-gan
 """
 
 import os
+import logging
+
 import multiprocessing
 import numpy as np
 import torch
@@ -210,15 +212,12 @@ class Corgan(Synthesizer):
         generating synthetic binary data.
     """
     
-    def __init__(self, debug=False, n_cpu=1):
+    def __init__(self, n_cpu=1):
         """
         Create a CorGAN structure.
 
         Parameters
         ----------
-        debug : bool, optional
-            If True, output debugging messages; otherwise, do not print
-            debugging messages. The default is False.
         n_cpu : int, optional
             Number of CPUs to use during training. The default is 1.
 
@@ -228,8 +227,8 @@ class Corgan(Synthesizer):
 
         """
 
-        self.debug=debug
         self.n_cpu = n_cpu
+        self.verbose = logging.INFO >= logging.root.level
 
     def autoencoder_loss(self, x_output, y_target, epsilon = 1e-12):
         """Calculate loss function for autoencoder model.
@@ -379,8 +378,7 @@ class Corgan(Synthesizer):
 
         # adapt batch-size to small datasets
         if len(x_tst) < batch_size or len(x_trn) < batch_size:
-            if self.debug:
-                print('\nWarning: decreasing batch size from',
+            logging.info('\nWarning: decreasing batch size from',
                       batch_size, 'to', min(len(x_tst), len(x_trn)),
                       'due to small dataset.', flush=True)
             batch_size = min(len(x_tst), len(x_trn))
@@ -416,8 +414,7 @@ class Corgan(Synthesizer):
         max_cpu = multiprocessing.cpu_count()
         if max_cpu > 1 and self.n_cpu > 1:
             self.n_cpu = min(max_cpu, self.n_cpu)
-            if self.debug:
-                print('Using', self.n_cpu, 'of', max_cpu, 'CPUs', flush=True)
+            logging.info('Using', self.n_cpu, 'of', max_cpu, 'CPUs', flush=True)
             generator_model = nn.DataParallel(generator_model, list(range(self.n_cpu)))
             discriminator_model = nn.DataParallel(discriminator_model, list(range(self.n_cpu)))
             autoencoder_model = nn.DataParallel(autoencoder_model, list(range(self.n_cpu)))
@@ -438,7 +435,7 @@ class Corgan(Synthesizer):
                                        weight_decay=weight_decay)
 
         timer_pre = tqdm(range(n_epochs_pretrain), desc='Pre-training', 
-                         unit=' epochs', disable=(not self.debug))
+                         unit=' epochs', disable=(not self.verbose))
         for epoch_pre in timer_pre:
             for i, samples in enumerate(d_trn):
 
@@ -457,14 +454,14 @@ class Corgan(Synthesizer):
                 a_loss.backward()
                 optimizer_a.step()
 
-                if self.debug:
+                if self.verbose:
                     batches_done = epoch_pre * len(x_trn) + i
                     if batches_done % sample_interval == 0:
                         msg = '[A loss: %.3f]' % (a_loss.item())
                         timer_pre.set_postfix_str(s=msg, refresh=False)
 
         gen_iterations = 0
-        timer = tqdm(range(n_epochs), desc='Training', unit=' epochs', disable=(not self.debug))
+        timer = tqdm(range(n_epochs), desc='Training', unit=' epochs', disable=(not self.verbose))
         for epoch in timer:
             for i, samples in enumerate(d_trn):
 
@@ -561,7 +558,7 @@ class Corgan(Synthesizer):
                 reconst_samples_test = autoencoder_model(real_samples_test)
                 a_loss_test = self.autoencoder_loss(reconst_samples_test, real_samples_test)
 
-            if self.debug:
+            if self.verbose:
                 msg = 'TRAIN: [Loss_D: %.3f] [Loss_G: %.3f] [Loss_D_real: %.3f] [Loss_D_fake %.3f]' \
                       % (err_d.item(), err_g.item(), err_d_real.item(),err_d_fake.item())
                 msg = msg+' | TEST: [A loss: %.2f] [real accuracy: %.2f] [fake accuracy: %.2f]' \
