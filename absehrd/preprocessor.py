@@ -1,4 +1,6 @@
 from os.path import isfile
+import logging
+
 import numpy as np
 from pyarrow import feather
 import pandas as pd
@@ -7,23 +9,23 @@ class Preprocessor:
     """Preprocessing functions for transforming and restoring data matrices.
     """
 
-    def __init__(self, missing_value):
+    def __init__(self, missing_value: str):
+        """Create preprocesor object.
+
+        Args:
+            missing_value (str): string representing missing values
+        """
         self.missing_value=missing_value
         self.delim = '__'
 
     def get_file_type(self, file_name):
         """Determine the type of file.
 
-        Parameters
-        ----------
-        file_name : str
-            Name of the file.
+        Args:
+            file_name (str): name of the file.
 
-        Returns
-        -------
-        file_type : str
-            Standardized suffix of file type.
-
+        Returns:
+            file_type (str): standardized suffix of file type.
         """
 
         file_type = ''
@@ -43,22 +45,17 @@ class Preprocessor:
 
         return file_type
 
-    def get_default_header(self, n_col, prefix='C'):
+    def get_default_header(self, n_col: int, prefix: str='C') -> np.array:
         """Generate a header with a generic label and column number.
 
-        Parameters
-        ----------
-        n_col : int
-            Number of columns for header.
-        prefix : str, optional
-            Prefix for elements of the header. The default is 'C'.
+        Args:
+            n_col (int): number of columns for header.
+            prefix (str, optional): Prefix for elements of the header. Defaults to 'C'.
 
-        Returns
-        -------
-        header : array_like
-            Array with column names.
-
+        Returns:
+            np.array: Array with column names.
         """
+        
 
         header = np.full(shape=n_col, fill_value='',
                          dtype='<U'+str(len(str(n_col-1))+len(prefix)))
@@ -67,22 +64,17 @@ class Preprocessor:
 
         return header
 
-    def read_file(self, file_name, has_header=True):
+    def read_file(self, file_name: str, has_header: bool=True) -> dict:
         """Read a matrix of data from file.
 
-        Parameters
-        ----------
-        file_name : str
-            Full path and name of the file.
-        has_header : bool, optional
-            True if the file has a header; false otherwise. The default is True.
+        Args:
+            file_name (str): Full path and name of the file.
+            has_header (bool, optional): True if the file has a header; Otherwise, False. Defaults to True.
 
-        Returns
-        -------
-        dict
-            Dictionary object containing the matrix ('x') and header ('header').
-
+        Returns:
+            dict: Dictionary object containing the matrix ('x') and header ('header')
         """
+        
 
         arr = None
         header = []
@@ -134,19 +126,14 @@ class Preprocessor:
 
         return {'x':arr, 'header':header}
 
-    def is_iterable(self, obj):
+    def is_iterable(self, obj: object) -> bool:
         """Determine if an object is iterable.
 
-        Parameters
-        ----------
-        obj : object
-            Object to analyze.
+        Args:
+            obj (object): Object to analyze.
 
-        Returns
-        -------
-        bool
-            True if object is iterable; False otherwise.
-
+        Returns:
+            bool: True if object is iterable; otherwise, False.
         """
 
         try:
@@ -156,19 +143,14 @@ class Preprocessor:
         else:
             return True
 
-    def is_numeric(self, arr):
+    def is_numeric(self, arr: np.array) -> bool:
         """Determine if an array is numeric.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of any type.
+        Args:
+            arr (np.array): Array of any type.
 
-        Returns
-        -------
-        bool
-            True if the array contains numbers; False otherwise.
-
+        Returns:
+            bool: True if the array contains numbers; otherwise, False
         """
         
         if isinstance(arr, np.ndarray) and len(arr) == 0:
@@ -195,21 +177,16 @@ class Preprocessor:
 
         return True
 
-    def remove_na(self, arr):
+    def remove_na(self, arr: np.array) -> np.array:
         """Remove missing value elements from an array.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array that may or may not contain missing values.
+        Args:
+            arr (np.array): Array that may or may not contain missing values.
 
-        Returns
-        -------
-        d : array_like
-            Array with missing value elements removed.
-
+        Returns:
+            np.array: Array with missing value elements removed.
         """
-
+        
         arr_d = arr
 
         x_num = self.is_numeric(arr)
@@ -230,19 +207,14 @@ class Preprocessor:
 
         return arr_d
 
-    def get_minority_class(self, arr):
+    def get_minority_class(self, arr: np.array) -> str:
         """Get the least common element in the array.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array with two unique values; may contain missing values.
+        Args:
+            arr (np.array): Array with two unique values; may contain missing values.
 
-        Returns
-        -------
-        str
-            Value the occurs less frequently in the array.
-
+        Returns:
+            str: Value the occurs less frequently in the array.
         """
 
         arr_d = self.remove_na(arr)
@@ -261,41 +233,33 @@ class Preprocessor:
 
         return uniq_d[1]
 
-    def get_variable_type(self, arr, label=None, custom_categorical=(),
-                               custom_continuous=(), custom_count=(),
-                               custom_constant=(),
-                               max_uniq=10, max_diff=1e-10):
+    def get_variable_type(self, 
+                            arr: np.array, 
+                            label: str=None, 
+                            custom_categorical: list=(),
+                            custom_continuous: list=(), 
+                            custom_count: list=(),
+                            custom_constant: list=(),
+                            max_uniq: list=10, 
+                            max_diff: list=1e-10):
         """Guess at the type of variable.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of values of unknown type.
-        label : str, optional
-            Column label of the array. The default is None.
-        custom_categorical : array_like, optional
-            Array of column labels that are categorical. The default is ().
-        custom_continuous : array_like, optional
-            Array of column labels that are continuous. The default is ().
-        custom_count : array_like, optional
-            Array of column labels that are count. The default is ().
-        custom_constant : array_like, optional
-            Array of column labels that are constant. The default is ().
-        max_uniq : int, optional
-            Maximum number of unique values to be considered
-            categorical. The default is 10.
-        max_diff : float, optional
-            Maximum threshold difference between rounded value and value to 
-            be considered count. The default is 1e-10.
+        Args:
+            arr (np.array): Array of values of unknown type.
+            label (str, optional): Column label of the array. Defaults to None.
+            custom_categorical (list, optional): Array of column labels that are categorical. Defaults to ().
+            custom_continuous (list, optional): Array of column labels that are continuous. Defaults to ().
+            custom_count (list, optional): Array of column labels that are count. Defaults to ().
+            custom_constant (list, optional): Array of column labels that are constant. Defaults to ().
+            max_uniq (list, optional): Maximum number of unique values to be considered
+            categorical. Defaults to 10.
+            max_diff (list, optional): Maximum threshold difference between rounded value and value to 
+            be considered count. Defaults to 1e-10.
 
-        Returns
-        -------
-        str
-            Type of variable.  Options are 'constant', 'categorical', 
-            'count', 'continuous'.
-
+        Returns:
+            _type_: _description_
         """
-
+        
         arr_d = self.remove_na(arr)
         n_uniq = len(set(arr_d))
 
@@ -307,6 +271,9 @@ class Preprocessor:
 
         if label is not None and label in custom_count:
             return 'count'
+        
+        if label is not None and label in custom_constant:
+            return 'constant'
 
         if n_uniq == 1:
             return 'constant'
@@ -324,23 +291,17 @@ class Preprocessor:
 
         return 'categorical'
 
-    def get_metadata(self, arr, header):
+    def get_metadata(self, arr: np.array, header: np.array) -> np.array:
         """Gather metadata on each feature of a data matrix.
 
-        Parameters
-        ----------
-        arr : array_like
-            2D array for which to calculate metadata.
-        header : array_like
-            Array of column labels for the array.
+        Args:
+            arr (np.array): 2D array for which to calculate metadata.
+            header (np.array): Array of column labels for the array.
 
-        Returns
-        -------
-        meta : array_like
-            Metadata matrix containing one row of information per column.
-
+        Returns:
+            np.array: Metadata matrix containing one row of information per column.
         """
-
+        
         names = ['label','type', 'min', 'max', 'zero', 'one','unique','missing']
         formats = ['<U100','<U11','float64', 'float64',str(arr.dtype),str(arr.dtype), '<U1000', '?']
         meta = np.recarray(shape=arr.shape[1], names=names, formats=formats)
@@ -378,26 +339,22 @@ class Preprocessor:
 
         return meta
 
-    def get_one_hot_encoding(self, arr, label, unique_values = None, add_missing_col=False):
+    def get_one_hot_encoding(self, 
+                                arr: np.array, 
+                                label: str, 
+                                unique_values: list = None, 
+                                add_missing_col: bool=False) -> dict:
         """Convert a categorical variable into one-hot encoding matrix.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of values.
-        label : str
-            Column label of the feature contained in the array.
-        unique_values : array_like, optional
-            Custom array of unique values over which to create the encoding. The default is None.
-        add_missing_col : bool, optional
-            True if missing column is required; False otherwise. The default is False.
+        Args:
+            arr (np.array): Array of values.
+            label (str): Column label of the feature contained in the array.
+            unique_values (list, optional): Custom array of unique values over which to create the encoding. Defaults to None.
+            add_missing_col (bool, optional): True if missing column is required; otherwise, False. . Defaults to False.
 
-        Returns
-        -------
-        dict
-            Contains the matrix ('x') of one hot encoded data and 
+        Returns:
+            dict: Contains the matrix ('x') of one hot encoded data and 
             corresponding header ('header').
-
         """
 
         if unique_values is None:
@@ -423,21 +380,16 @@ class Preprocessor:
 
         return {'x':x_hot, 'header':u_label}
 
-    def scale(self, arr):
-        """Scale a numeric vector to between 0 and 1
+    def scale(self, arr: np.array) -> np.array:
+        """Scale a numeric vector to between 0 and 1.
 
-        Parameters
-        ----------
-        arr : array_like
-            Numeric array to scale.
+        Args:
+            arr (np.array): Numeric array to scale.
 
-        Returns
-        -------
-        arr_s : array_like
-            Scaled version of the array.
-
+        Returns:
+            np.array: Scaled version of the array.
         """
-
+        
         arr_d = self.remove_na(arr)
         x_min = np.min(arr_d)
         x_max = np.max(arr_d)
@@ -451,23 +403,19 @@ class Preprocessor:
 
         return arr_s
 
-    def unscale(self, arr, min_value, max_value):
+    def unscale(self, 
+                arr: np.array, 
+                min_value: int, 
+                max_value: int) -> np.array:
         """Convert a numeric array scaled between 0 and 1 into original range.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of scaled numeric values.
-        min_value : float
-            Minimum value in the original, unscaled array.
-        max_value : float
-            Maximum value in the original, unscaled array.
+        Args:
+            arr (np.array): Array of scaled numeric values.
+            min_value (int): Minimum value in the original, unscaled array.
+            max_value (int): Maximum value in the original, unscaled array.
 
-        Returns
-        -------
-        arr_c : array_like
-            Restored, unscaled array.
-
+        Returns:
+            np.array: Restored, unscaled array.
         """
 
         arr_c = np.zeros(len(arr))
@@ -476,20 +424,15 @@ class Preprocessor:
             arr_c[i] = ele * (max_value - min_value) + min_value
         return arr_c
 
-    def get_missing_column(self, arr):
+    def get_missing_column(self, arr: np.array) -> np.array:
         """Create a column to represent missing status of each feature.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of values which may or may not contain missing values.
+        Args:
+            arr (np.array): Array of values which may or may not contain missing values.
 
-        Returns
-        -------
-        arr_y : array_like
-            Binary array of same size as input array with 1 if 
+        Returns:
+            np.array: Binary array of same size as input array with 1 if 
             corresponding array value is the missing_value and 0 otherwise.
-
         """
 
         arr_y = np.zeros(shape=arr.shape)
@@ -503,21 +446,16 @@ class Preprocessor:
 
         return arr_y
 
-    def get_na_idx(self, arr):
+    def get_na_idx(self, arr: np.array) -> int:
         """Get indices of all missing values in an array.
 
-        Parameters
-        ----------
-        arr : array_like
-            Array of values which may or may not contain missing values.
+        Args:
+            arr (np.array): Array of values which may or may not contain missing values.
 
-        Returns
-        -------
-        idx : array_like
-            Array of integers representing the index of each missing value.
-
+        Returns:
+            int: Array of integers representing the index of each missing value.
         """
-
+        
         idx = np.array([])
         x_num = self.is_numeric(arr)
         m_num = self.is_numeric(self.missing_value)
@@ -535,28 +473,24 @@ class Preprocessor:
 
         return idx
 
-    def get_discretized_matrix(self, arr, meta, header, require_missing=True):
+    def get_discretized_matrix(self, 
+                                arr: np.array, 
+                                meta: np.array, 
+                                header: np.array, 
+                                require_missing: bool=True) -> dict:
         """Convert a generic matrix into a representation where each element
         is scaled between 0 and 1.
 
-        Parameters
-        ----------
-        arr : array_like
-            2D array of values of multiple types.
-        meta : array_like
-            2D matrix of metadata for each column.
-        header : array_like
-            Array of column labels.
-        require_missing : bool, optional
-            If True, require a missing column for each feature; 
+        Args:
+            arr (np.array): 2D array of values of multiple types.
+            meta (np.array): 2D matrix of metadata for each column.
+            header (np.array): Array of column labels.
+            require_missing (bool, optional): If True, require a missing column for each feature; 
             False otherwise. The default is True.
 
-        Returns
-        -------
-        dict
-            Constains the numeric version of the matrix ('x') and 
+        Returns:
+            dict: Contains the numeric version of the matrix ('x') and 
             corresponding header ('header').
-
         """
 
         d_x = np.empty(shape=0)
@@ -641,22 +575,18 @@ class Preprocessor:
 
         return {'x':d_x, 'header':d_header}
 
-    def unravel_one_hot_encoding(self, arr, unique_values):
+    def unravel_one_hot_encoding(self, 
+                                    arr: np.array, 
+                                    unique_values: list) -> np.array:
         """Restore a binary, one-hot encoded matrix to its original
         categorical feature format.
 
-        Parameters
-        ----------
-        arr : array_like
-            2D array of one-hot encoded data.
-        unique_values : array_like
-            Unique values corresponding to each column of the array. The default is None.
+        Args:
+            arr (np.array): 2D array of one-hot encoded data.
+            unique_values (list): Unique values corresponding to each column of the array. 
 
-        Returns
-        -------
-        arr_c : array_like
-            1D array representing categorical feature format from one-hot encoded matrix.
-
+        Returns:
+            np.array: 1D array representing categorical feature format from one-hot encoded matrix.
         """
 
         arr_c = []
@@ -674,26 +604,22 @@ class Preprocessor:
 
         return arr_c
 
-    def restore_matrix(self, arr, meta, header):
+    def restore_matrix(self, 
+                        arr: np.array, 
+                        meta: np.array, 
+                        header: np.array) -> dict:
         """Restore scaled, numeric matrix to its original format.
 
-        Parameters
-        ----------
-        arr : array_like
-            Discretized version of the array.
-        meta : array_like
-            2D matrix of metadata for each column.
-        header : array_like
-            Array of column labels for the discretized array.
+        Args:
+            arr (np.array): Discretized version of the array.
+            meta (np.array): 2D matrix of metadata for each column.
+            header (np.array): Array of column labels for the discretized array.
 
-        Returns
-        -------
-        dict
-            Contains the original version of the matrix ('x') and 
+        Returns:
+            dict: Contains the original version of the matrix ('x') and 
             corresponding header ('header').
-
         """
-
+        
         c_prime = []
         variable_names = []
         variable_values = []
