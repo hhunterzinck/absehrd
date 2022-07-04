@@ -6,7 +6,7 @@
 import numpy as np
 
 # absehrd modules
-from realism import Realism
+from absehrd.realism import Realism
 
 class TestRealism:
     

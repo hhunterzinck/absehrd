@@ -10,7 +10,7 @@ import pickle
 from pyarrow import feather
 
 # sehrd modules
-from preprocessor import Preprocessor
+from absehrd.preprocessor import Preprocessor
 
 class TestPreprocessor:
     

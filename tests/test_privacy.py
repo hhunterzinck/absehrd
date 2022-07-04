@@ -2,7 +2,7 @@ import numpy as np
 
 
 # abserhd
-from privacy import Privacy
+from absehrd.privacy import Privacy
 
 class TestPrivacy(object):
     

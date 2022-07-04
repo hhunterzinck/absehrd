@@ -1,4 +1,12 @@
+import os
+
 import numpy as np
+
+# setup the cache
+try:
+    os.mkdir('examples')
+except:
+    print("Warning: cache 'examples' directory already exists.  ")
 
 file_trn = 'examples/example_train.csv'
 file_tst = 'examples/example_test.csv'

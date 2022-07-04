@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 # sehrd modules
-from corgan import Corgan
+from absehrd.corgan import Corgan
 
 class TestCorgan:
     

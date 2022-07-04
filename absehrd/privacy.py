@@ -6,10 +6,10 @@ from scipy.spatial import distance as dist
 from tqdm import tqdm
 
 # sehrd modules
-from validator import Validator
-from corgan import Corgan
-from corgan import Discriminator
-from preprocessor import Preprocessor
+from absehrd.validator import Validator
+from absehrd.corgan import Corgan
+from absehrd.corgan import Discriminator
+from absehrd.preprocessor import Preprocessor
 
 class Privacy(Validator):
     """Validates the privacy preserving properties of the synthetic data.

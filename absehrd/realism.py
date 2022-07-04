@@ -6,8 +6,8 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 
 # sehrd
-from preprocessor import Preprocessor
-from validator import Validator
+from absehrd.preprocessor import Preprocessor
+from absehrd.validator import Validator
 
 class MLP(torch.nn.Module):
     """Multilayer perceptron model.
