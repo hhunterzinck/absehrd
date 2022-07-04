@@ -1,4 +1,4 @@
-import argparse
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 import sys
 from os.path import isfile
 import datetime as dt
@@ -15,43 +15,23 @@ from absehrd.privacy import Privacy
 
 # cli ------------------------
 
-def create_cli():
+def create_subparser_train(subparsers: ArgumentParser, choices_train_type: list) -> ArgumentParser:
+    """Create generate subparser for CLI.
 
-    # valid values (default is always first)
-    choices_train_type = ['corgan', 'ppgan']
-    choices_analysis_realism = ['feature_frequency',
-                    'feature_effect',
-                    'gan_train_test']
-    choices_analysis_privacy = ['nearest_neighbors',
-                    'membership_inference']
-    choices_output = ['summary', 'file', 'plot', 'all']
+    Args:
+        subparsers (ArgumentParser): subparser object for CLI
+        choices_train_type (list): list of choices for training type
 
-    # parsers
-    parser = argparse.ArgumentParser(description="Automated Brewing of Synthetic Electronic Health Record Data",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument('--verbose',
-                    help='print verbose output',
-                    action='store_true',
-                    required=False)
-
-    subparsers = parser.add_subparsers(help='task to perform',
-                                    dest='task',
-                                    required=True)
+    Returns:
+        ArgumentParser: complete task subparser object
+    """
+    
+    subparsers.add_parser('train',
+                    help='train a synthetic data generator',
+                    formatter_class=ArgumentDefaultsHelpFormatter)
     parser_t = subparsers.add_parser('train',
                     help='train a synthetic data generator',
-                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser_g = subparsers.add_parser('generate',
-                    help='generate synthetic dataset',
-                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser_r = subparsers.add_parser('realism',
-                    help='assess realism of synthetic dataset',
-                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser_p = subparsers.add_parser('privacy',
-                    help='assess privacy risk of synthetic dataset',
-                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    # subparser: train
+                    formatter_class=ArgumentDefaultsHelpFormatter)
     parser_t.add_argument('--file_data',
                     help='path to file containing real data',
                     type=str,
@@ -85,8 +65,20 @@ def create_cli():
                     type=int,
                     default=1,
                     required=False)
+    return parser_t
 
-    # subparser: generate
+def create_subparser_generate(subparsers: ArgumentParser) -> ArgumentParser:
+    """Create generate subparser for CLI.
+
+    Args:
+        subparsers (ArgumentParser): subparser object for CLI
+
+    Returns:
+        ArgumentParser: complete task subparser object
+    """
+    parser_g = subparsers.add_parser('generate',
+                    help='generate synthetic dataset',
+                    formatter_class=ArgumentDefaultsHelpFormatter)
     parser_g.add_argument('--file_model',
                     help='path to file containing trained generator',
                     type=str,
@@ -110,8 +102,23 @@ def create_cli():
                     type=str,
                     default='-999999',
                     required=False)
+    return parser_g
 
-    # subparser: realism
+def create_subparser_realism(subparsers: ArgumentParser, choices_analysis: list, choices_output: list) -> ArgumentParser:
+    """Create generate subparser for CLI.
+
+    Args:
+        subparsers (ArgumentParser): subparser object for CLI
+        choices_analysis (list): list of choices for analyis
+        choices_output (list): list of choices for type of output
+
+    Returns:
+        ArgumentParser: complete task subparser object
+    """
+
+    parser_r = subparsers.add_parser('realism',
+                    help='assess realism of synthetic dataset',
+                    formatter_class=ArgumentDefaultsHelpFormatter)
     parser_r.add_argument('--outprefix_realism',
                     metavar='OUTPREFIX',
                     help='file prefix for realism assessments',
@@ -140,16 +147,31 @@ def create_cli():
                     required=False)
     parser_r.add_argument('--analysis_realism',
                     help='type of realism validation analysis',
-                    choices=choices_analysis_realism,
-                    default=choices_analysis_realism[0],
+                    choices=choices_analysis,
+                    default=choices_analysis[0],
                     required=False)
     parser_r.add_argument('--output_realism',
                     help='type of output for realism analysis',
                     choices=choices_output,
                     default=choices_output[0],
                     required=False)
+    return parser_r
 
-    # subparser: privacy
+def create_subparser_privacy(subparsers: ArgumentParser, choices_analysis: list, choices_output: list) -> ArgumentParser:
+    """Create generate subparser for CLI.
+
+    Args:
+        subparsers (ArgumentParser): subparser object for CLI
+        choices_analysis (list): list of choices for analyis
+        choices_output (list): list of choices for type of output
+
+    Returns:
+        ArgumentParser: complete task subparser object
+    """
+    
+    parser_p = subparsers.add_parser('privacy',
+                    help='assess privacy risk of synthetic dataset',
+                    formatter_class=ArgumentDefaultsHelpFormatter)
     parser_p.add_argument('--outprefix_privacy',
                     metavar='OUTPREFIX',
                     help='file prefix for realism assessments',
@@ -174,8 +196,8 @@ def create_cli():
                     required=False)
     parser_p.add_argument('--analysis_privacy',
                     help='type of privacy validation analysis',
-                    choices=choices_analysis_privacy,
-                    default=choices_analysis_privacy[0],
+                    choices=choices_analysis,
+                    default=choices_analysis[0],
                     required=False)
     parser_p.add_argument('--output_privacy',
                     help='type of output for privacy analysis',
@@ -187,80 +209,120 @@ def create_cli():
                     type=int,
                     default=10000,
                     required=False)
+    return parser_p
+
+
+def create_cli() -> ArgumentParser:
+    """Create parser for CLI
+
+    Returns:
+        ArgumentParser: complete CLI parser
+    """
+
+    # valid values (default is always first)
+    choices_train_type = ['corgan', 'ppgan']
+    choices_analysis_realism = ['feature_frequency',
+                    'feature_effect',
+                    'gan_train_test']
+    choices_analysis_privacy = ['nearest_neighbors',
+                    'membership_inference']
+    choices_output = ['summary', 'file', 'plot', 'all']
+
+    # parsers
+    parser = ArgumentParser(description="Automated Brewing of Synthetic Electronic Health Record Data",
+        formatter_class=ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--verbose',
+                    help='print verbose output',
+                    action='store_true',
+                    required=False)
+
+    subparsers = parser.add_subparsers(help='task to perform',
+                                    dest='task',
+                                    required=True)
+    create_subparser_train(subparsers, choices_train_type=choices_train_type)
+    create_subparser_generate(subparsers)
+    create_subparser_realism(subparsers, 
+                            choices_analysis=choices_analysis_realism, 
+                            choices_output=choices_output)
+    create_subparser_privacy(subparsers, 
+                            choices_analysis=choices_analysis_privacy,
+                            choices_output=choices_output)
 
     return parser
 
 
-# check user input -------------
+def check_input(parser: ArgumentParser) -> bool:
+    """Check the user input for custom rules.
 
-def check_input(parser):
+    Args:
+        parser (ArgumentParser): full CLI parser
 
-    # print help and exit if no arguments specified
+    Returns:
+        bool: True if all checks pass; otherwise, False
+    """
+
     if len(sys.argv)==1:
         parser.print_help()
-        sys.exit(0)
+        return False
 
-    # get command line arguments
     args = parser.parse_args()
 
-    # check arguments for 'train' task
     if args.task == 'train':
 
         if args.n_epoch <= 0:
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --n_epoch: invalid choice: \'' +
+            logging.error('argument --n_epoch: invalid choice: \'' +
                 str(args.n_epoch) + '\' (choose integer greater than 0)')
-            sys.exit(0)
+            return False
 
         max_cpu = multiprocessing.cpu_count()
         if args.n_cpu_train < 1 or args.n_cpu_train > max_cpu:
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --n_cpu_train: invalid choice: \'' +
+            logging.error('argument --n_cpu_train: invalid choice: \'' +
                 str(args.n_cpu_train) + '\' (choose integer in range [1,' +
                 str(max_cpu) + '])')
-            sys.exit(0)
+            return False
 
         if args.frac_train < 0 or args.frac_train > 1:
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --frac_train: invalid choice: \'' +
+            logging.error('argument --frac_train: invalid choice: \'' +
                 str(args.n_cpu_train) + '\' (choose float in range [0,1])')
-            sys.exit(0)
+            return False
 
         if not isfile(args.file_data):
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --file_data: file does not exist: \'' +
+            logging.error('argument --file_data: file does not exist: \'' +
                 str(args.file_data) + '\' (check path to file)')
-            sys.exit(0)
+            return False
 
-    # check arguments for 'generate' task
-    if args.task == 'generate':
+    elif args.task == 'generate':
 
         if args.generate_size <= 0:
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --generate_size: invalid choice: \'' +
+            logging.error('argument --generate_size: invalid choice: \'' +
                 str(args.generate_size) + '\' (choose integer greater than 0)')
-            sys.exit(0)
+            return False
 
         if not isfile(args.file_model):
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --file_model: file does not exist: \'' +
+            logging.error('argument --file_model: file does not exist: \'' +
                 str(args.file_model) + '\' (check path to file)')
-            sys.exit(0)
+            return False
 
         max_cpu = multiprocessing.cpu_count()
         if args.n_cpu_generate < 1 or args.n_cpu_generate > max_cpu:
             parser.print_usage()
-            logging.info('sehrd.py: error: argument --n_cpu_generate: invalid choice: \'' +
+            logging.error('argument --n_cpu_generate: invalid choice: \'' +
                 str(args.n_cpu_generate) + '\' (choose integer in range [1,' +
                 str(max_cpu) + '])')
-            sys.exit(0)
+            return False
 
-
-# tasks --------------
+    return True
 
 def main():
 
-    outfile = 'none'
+    outfile = ''
 
     parser = create_cli()
     check_input(parser)
@@ -269,8 +331,7 @@ def main():
     if args.verbose:
         logging.getLogger().setLevel(logging.INFO)
 
-    # initial message -----------------
-
+    # initial message
     tic = dt.datetime.now()
     logging.info('\n------------------------------')
     logging.info('\nStarted: ' + str(tic.replace(microsecond=0)))
@@ -333,7 +394,6 @@ def main():
         r_tst = pre.read_file(args.file_realism_real_test)
         s = pre.read_file(args.file_realism_synth)
 
-        # analysis
         if args.analysis_realism == 'feature_frequency':
             res = rea.feature_frequency(mat_f_r_trn=r_trn['x'],
                                         mat_f_r_tst=r_tst['x'],
@@ -364,7 +424,6 @@ def main():
                 + args.analysis_realism)
             sys.exit(0)
 
-        # output
         if args.output_realism == 'file':
             outfile = args.outprefix_realism + '_' + args.analysis_realism + '.pkl'
             res['analysis'] = args.analysis_realism
@@ -403,7 +462,6 @@ def main():
         r_tst = pre.read_file(args.file_privacy_real_test)
         s = pre.read_file(args.file_privacy_synth)
         
-        # subsample 
         if args.sample_privacy < len(s['x']):
             idx = np.random.choice(range(len(s['x'])), args.sample_privacy, replace=False)
             s['x'] = s['x'][idx,:]
@@ -414,7 +472,6 @@ def main():
             idx = np.random.choice(range(len(r_tst['x'])), args.sample_privacy, replace=False)
             r_tst['x'] = r_tst['x'][idx,:]
 
-        # analysis
         if args.analysis_privacy == 'nearest_neighbors':
             res = pri.assess_memorization(mat_f_r=r_trn['x'],
                                         mat_f_s=s['x'],
@@ -431,7 +488,6 @@ def main():
                 + args.analysis_privacy)
             sys.exit(0)
 
-        # output
         if args.output_privacy == 'file':
             outfile = args.outprefix_privacy + '_' + args.analysis_privacy + '.pkl'
             res['analysis'] = args.analysis_privacy
@@ -465,8 +521,7 @@ def main():
                 + args.output_privacy)
             sys.exit(0)
 
-    # final message -----------------
-
+    # final message 
     toc = dt.datetime.now()
     logging.info('')
     logging.info('Output file: ' + outfile)
